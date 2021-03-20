@@ -14,7 +14,10 @@
 #include "Graph.hpp"
 
 int main(int argc, const char * argv[]) {
-    Graph g(argv[1]);
+    int contactSeq = 0;
+    if (argc == 3)
+        contactSeq = 1;
+    Graph g(argv[1], contactSeq);
 
     std::cout << "Hello, World!\n";
     return 0;

@@ -30,9 +30,9 @@ class Graph
 {
 public:
     Graph() {}
-    Graph(const char* filePath); // input file
-    void xuanToWuModel(const char* filePath); // input file
-    void finalizeOutput(int numVertices, int numEdges, string opFile, string outputFinal);
+    Graph(const char* filePath, int contactseq);        //Generate graph in contact seq model.
+    void xuanToWuModel(const char* filePath, int contactSeq); // input file
+    void finalizeOutput(int numVertices, int numEdges, string opFile, string outputFinal, int contactSeq);
     vector<tuple<int, int, int>> adjustSlowIntervals(std::vector<tuple<int, int, int> > &intervalVector);
 };
 

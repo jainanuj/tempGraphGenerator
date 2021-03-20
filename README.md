@@ -7,3 +7,11 @@ Output will be in the files:
 
 filename_op_final.txt ---- for the temporal interval model.
 filename_op_wu.txt    ---- for the contact sequence model.
+---------------------------------------
+
+./temporalGraphGenerator <filename.txt> cs
+Output will be in the files:
+
+filename_op_cs_final.txt ---- for the interval cont seq model.
+filename_op_wu.txt    ---- for the contact sequence model.
+
