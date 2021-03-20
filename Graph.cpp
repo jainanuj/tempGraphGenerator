@@ -19,7 +19,15 @@
 #define AVG_INTVL_DURATION 8
 #define AVG_TRVL_TIME 5
 
-Graph::Graph(const char* filePath)      //Reads the edges of the graph in interval format. Edges will be specified as u, v, intvlCount, [intvls]. Each intvl is specified as (start, end, travelTime). End is last time instant at which edge can be used.
+#define INTERMDT_OPEND "_op.txt"
+#define FINAL_OPEND "_final.txt"
+#define WU_END      "_wu.txt"
+
+#define CONTACTSEQ_END "_cs_final.txt"
+
+
+
+Graph::Graph(const char* filePath, int contactSeq = 0)      //Reads the edges of the graph in interval format. Edges will be specified as u, v, intvlCount, [intvls]. Each intvl is specified as (start, end, travelTime). End is last time instant at which edge can be used.
 {
     //FILE* inFile;
     FILE* outFile;
@@ -34,7 +42,7 @@ Graph::Graph(const char* filePath)      //Reads the edges of the graph in interv
     std::normal_distribution<double> intvlDurationDistr(AVG_INTVL_DURATION, STD_DEV);
     std::normal_distribution<double> travelTimeDistr(AVG_TRVL_TIME, STD_DEV);
 
-    string outputEnd = "_op.txt";
+    string outputEnd = INTERMDT_OPEND;
     unsigned long len = outputEnd.length();
     std::string opFile(filePath);
     opFile.replace(opFile.length()-4, len, outputEnd);
@@ -56,15 +64,23 @@ Graph::Graph(const char* filePath)      //Reads the edges of the graph in interv
         int intvlDuration;
         for (int p = 0; p < numIntvls; p++)
         {
-            intvlDuration = (int)intvlDurationDistr(defaultGenerator);     //Use gaussiona distr with (AVG_INTVL_DURATION, STD_DEV)
-            while ( (intvlDuration <= 0) || ( (partitionSize*(p+1) - intvlDuration) < partitionSize*p) )
-                intvlDuration = intvlDurationDistr(defaultGenerator);     //Use gaussiona distr with (AVG_INTVL_DURATION, STD_DEV)
+            if (contactSeq == 0)
+            {
+                intvlDuration = (int)intvlDurationDistr(defaultGenerator);     //Use gaussiona distr with (AVG_INTVL_DURATION, STD_DEV)
+                while ( (intvlDuration <= 0) || ( (partitionSize*(p+1) - intvlDuration) < partitionSize*p) )
+                    intvlDuration = intvlDurationDistr(defaultGenerator);     //Use gaussiona distr with (AVG_INTVL_DURATION, STD_DEV)
+            }
+            else
+                intvlDuration = 0;
             intvlStart = rand() % (partitionSize - intvlDuration) + partitionSize*p;       //random number between these numbers.
             intvlEnd = intvlStart + intvlDuration;
             lambda = (int)travelTimeDistr(defaultGenerator);           //Use gaussian distr with (AVG_TRVL_TIME, STD_DEV)
             while (lambda <= 0)
                 lambda = (int)travelTimeDistr(defaultGenerator);           //Use gaussian distr with (AVG_TRVL_TIME, STD_DEV)
-            fprintf(outFile, " %d %d %d", intvlStart, intvlEnd, lambda);
+            if (contactSeq == 0)
+                fprintf(outFile, " %d %d %d", intvlStart, intvlEnd, lambda);
+            else
+                fprintf(outFile, " %d %d", intvlStart, lambda);
         }
         fprintf(outFile, "\n");
 //        intvls.clear();
@@ -76,15 +92,18 @@ Graph::Graph(const char* filePath)      //Reads the edges of the graph in interv
     }
     fclose(outFile);
     
-    outputEnd = "_final.txt";
+    if (contactSeq == 0)
+        outputEnd = FINAL_OPEND;
+    else
+        outputEnd = CONTACTSEQ_END;
     len = outputEnd.length();
     std::string outputFinal(opFile);
     outputFinal.replace(opFile.length()-4, len, outputEnd);
 
-    finalizeOutput(maxVertex+1, numEdgesWritten, opFile, outputFinal);
+    finalizeOutput(maxVertex+1, numEdgesWritten, opFile, outputFinal, contactSeq);
     cout << "NumEdges: " << numEdgesWritten << ". Num Vertices: " << maxVertex << ".\n";
     
-    xuanToWuModel(outputFinal.c_str());
+    xuanToWuModel(outputFinal.c_str(), contactSeq);
     
 /*    string opEdgesVerts = to_string(maxVertex);
     opEdgesVerts += " ";
@@ -126,7 +145,7 @@ vector<tuple<int, int, int>> Graph::adjustSlowIntervals(std::vector<tuple<int, i
 }
 
 
-void Graph::finalizeOutput(int numVertices, int numEdges, string opFile, string outputFinal)
+void Graph::finalizeOutput(int numVertices, int numEdges, string opFile, string outputFinal, int contactSeq)
 {
     vector <tuple<int, int, int>> inputIntvlsVector;
     int u, v, numIntvls, intvlStart, intvlEnd, lambda;
@@ -144,20 +163,31 @@ void Graph::finalizeOutput(int numVertices, int numEdges, string opFile, string 
         inputIntvlsVector.clear();
         for (int intvlRead = 0; intvlRead <  numIntvls; intvlRead++)
         {
-            parseLine >> intvlStart >> intvlEnd >> lambda;
-            inputIntvlsVector.push_back(make_tuple(intvlStart, intvlEnd, lambda));
+            if (contactSeq == 0)
+            {
+                parseLine >> intvlStart >> intvlEnd >> lambda;
+                inputIntvlsVector.push_back(make_tuple(intvlStart, intvlEnd, lambda));
+            }
+            else
+            {
+                parseLine >> intvlStart >> lambda;
+                inputIntvlsVector.push_back(make_tuple(intvlStart, intvlStart, lambda));
+            }
         }
         vector <tuple<int, int, int>> outputIntvls = adjustSlowIntervals(inputIntvlsVector);
         outFile << outputIntvls.size() << "  ";     //OutputNumIntvls
         for (int i = (int)outputIntvls.size() - 1; i >= 0; i--)
         {
-            outFile << get<0>(outputIntvls[i]) << " " << get<1>(outputIntvls[i]) << " " << get<2>(outputIntvls[i]) << " ";
+            if (contactSeq == 0)
+                outFile << get<0>(outputIntvls[i]) << " " << get<1>(outputIntvls[i]) << " " << get<2>(outputIntvls[i]) << " ";
+            else
+                outFile << get<0>(outputIntvls[i]) << " " << get<2>(outputIntvls[i]) << " ";
         }
         outFile << "\n";
     }
 }
 
-void Graph::xuanToWuModel(const char* filePath) // input file
+void Graph::xuanToWuModel(const char* filePath, int contactSeq) // input file
 {
     int u, v, lambda, numIntvls, intvlStart, intvlEnd, numEdgesWritten = 0, numVertices;
     string outputEnd = "_wu.txt";
@@ -181,11 +211,21 @@ void Graph::xuanToWuModel(const char* filePath) // input file
         parseLine >> u >> v >> numIntvls;
         for (int intvlRead = 0; intvlRead <  numIntvls; intvlRead++)
         {
-            parseLine >> intvlStart >> intvlEnd >> lambda;
-            for (int t = intvlStart; t <= intvlEnd; t++)
+            if (contactSeq == 0)
             {
+                parseLine >> intvlStart >> intvlEnd >> lambda;
+                for (int t = intvlStart; t <= intvlEnd; t++)
+                {
+                    wuEdges.push_back(make_tuple(u, v, t, lambda));
+                    //fprintf(outFile, "%d %d %d %d\n", u, v, t, lambda);
+                    numEdgesWritten++;
+                }
+            }
+            else
+            {
+                parseLine >> intvlStart >> lambda;
+                int t = intvlStart;
                 wuEdges.push_back(make_tuple(u, v, t, lambda));
-                //fprintf(outFile, "%d %d %d %d\n", u, v, t, lambda);
                 numEdgesWritten++;
             }
         }
