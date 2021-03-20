@@ -15,7 +15,7 @@
 
 #define MAX_RANGE 500
 #define STD_DEV 2
-#define AVG_NUM_INTVLS 5
+#define AVG_NUM_INTVLS 20
 #define AVG_INTVL_DURATION 8
 #define AVG_TRVL_TIME 5
 
