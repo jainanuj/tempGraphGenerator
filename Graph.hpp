@@ -17,6 +17,12 @@
 #include <queue>
 #include <iostream>
 using namespace std;
+#define MAX_RANGE 500
+#define STD_DEV 2
+#define AVG_NUM_INTVLS 2
+#define AVG_INTVL_DURATION 5
+#define AVG_TRVL_TIME 3
+
 
 struct Interval
 {
@@ -29,7 +35,7 @@ class Graph
 {
 public:
     Graph() {}
-    Graph(const char* filePath, int contactseq);        //Generate graph in contact seq model.
+    Graph(const char* filePath, int avgNumIntvls=AVG_NUM_INTVLS, int avgInvlDuration=AVG_INTVL_DURATION, int avgTrvlTime=AVG_TRVL_TIME, int contactSeq=0);
     void xuanToWuModel(const char* filePath, int contactSeq); // input file
     void finalizeOutput(int numVertices, int numEdges, string opFile, string outputFinal, int contactSeq);
     vector<tuple<int, int, int>> adjustSlowIntervals(std::vector<tuple<int, int, int> > &intervalVector);

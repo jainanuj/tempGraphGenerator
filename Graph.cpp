@@ -13,34 +13,29 @@
 #include <random>
 #include <time.h>
 
-#define MAX_RANGE 500
-#define STD_DEV 2
-#define AVG_NUM_INTVLS 20
-#define AVG_INTVL_DURATION 8
-#define AVG_TRVL_TIME 5
-
 #define INTERMDT_OPEND "_op.txt"
-#define FINAL_OPEND "_final.txt"
+#define FINAL_OPEND "_final-"
 #define WU_END      "_wu.txt"
 
 #define CONTACTSEQ_END "_cs_final.txt"
 
 
 
-Graph::Graph(const char* filePath, int contactSeq = 0)      //Reads the edges of the graph in interval format. Edges will be specified as u, v, intvlCount, [intvls]. Each intvl is specified as (start, end, travelTime). End is last time instant at which edge can be used.
+Graph::Graph(const char* filePath, int avgNumIntvls, int avgInvlDuration, int avgTrvlTime, int contactSeq)      //Reads the edges of the graph in interval format. Edges will be specified as u, v, intvlCount, [intvls]. Each intvl is specified as (start, end, travelTime). End is last time instant at which edge can be used.
 {
     //FILE* inFile;
     FILE* outFile;
     int x;
+    int numVerts, numEdges;
     int u, v, lambda, intvlStart, intvlEnd, numEdgesWritten = 0, maxVertex = 0;
 //    vector<tuple<int, int, int>> intvls;
     std::default_random_engine defaultGenerator;
 /*    std::default_random_engine numIntvlsGenerator;
     std::default_random_engine intvlDurationGenerator;
     std::default_random_engine travelTimeGenerator;*/
-    std::normal_distribution<double> numIntvlsDistr(AVG_NUM_INTVLS, STD_DEV);
-    std::normal_distribution<double> intvlDurationDistr(AVG_INTVL_DURATION, STD_DEV);
-    std::normal_distribution<double> travelTimeDistr(AVG_TRVL_TIME, STD_DEV);
+    std::normal_distribution<double> numIntvlsDistr(avgNumIntvls, STD_DEV);
+    std::normal_distribution<double> intvlDurationDistr(avgInvlDuration, STD_DEV);
+    std::normal_distribution<double> travelTimeDistr(avgTrvlTime, STD_DEV);
 
     string outputEnd = INTERMDT_OPEND;
     unsigned long len = outputEnd.length();
@@ -51,13 +46,15 @@ Graph::Graph(const char* filePath, int contactSeq = 0)      //Reads the edges of
     ifstream inputFile(filePath);
     string inputLine;
     srand( (int)time(NULL));
+    getline(inputFile, inputLine);
+    sscanf(inputLine.c_str(), "%d %d", &numVerts, &numEdges);
     
     while (getline(inputFile, inputLine))
     {
         x = sscanf(inputLine.c_str(), "%d %d", &u, &v);
-        int numIntvls = (int)numIntvlsDistr(defaultGenerator);     //Use Gaussian distribution with (AVG_NUM_INTVLS, STD_DEV)
+        int numIntvls = (int)numIntvlsDistr(defaultGenerator);     //Use Gaussian distribution with (avgNumIntvls, STD_DEV)
         while (numIntvls <= 0)
-            numIntvls = (int)numIntvlsDistr(defaultGenerator);     //Use Gaussian distribution with (AVG_NUM_INTVLS, STD_DEV)
+            numIntvls = (int)numIntvlsDistr(defaultGenerator);     //Use Gaussian distribution with (avgNumIntvls, STD_DEV)
         int partitionSize = MAX_RANGE/numIntvls;
         
         fprintf(outFile, "%d %d %d ", u, v, numIntvls);
@@ -66,17 +63,17 @@ Graph::Graph(const char* filePath, int contactSeq = 0)      //Reads the edges of
         {
             if (contactSeq == 0)
             {
-                intvlDuration = (int)intvlDurationDistr(defaultGenerator);     //Use gaussiona distr with (AVG_INTVL_DURATION, STD_DEV)
+                intvlDuration = (int)intvlDurationDistr(defaultGenerator);     //Use gaussiona distr with (avgInvlDuration, STD_DEV)
                 while ( (intvlDuration <= 0) || ( (partitionSize*(p+1) - intvlDuration) < partitionSize*p) )
-                    intvlDuration = intvlDurationDistr(defaultGenerator);     //Use gaussiona distr with (AVG_INTVL_DURATION, STD_DEV)
+                    intvlDuration = intvlDurationDistr(defaultGenerator);     //Use gaussiona distr with (avgInvlDuration, STD_DEV)
             }
             else
                 intvlDuration = 0;
             intvlStart = rand() % (partitionSize - intvlDuration) + partitionSize*p;       //random number between these numbers.
             intvlEnd = intvlStart + intvlDuration;
-            lambda = (int)travelTimeDistr(defaultGenerator);           //Use gaussian distr with (AVG_TRVL_TIME, STD_DEV)
+            lambda = (int)travelTimeDistr(defaultGenerator);           //Use gaussian distr with (avgTrvlTime, STD_DEV)
             while (lambda <= 0)
-                lambda = (int)travelTimeDistr(defaultGenerator);           //Use gaussian distr with (AVG_TRVL_TIME, STD_DEV)
+                lambda = (int)travelTimeDistr(defaultGenerator);           //Use gaussian distr with (avgTrvlTime, STD_DEV)
             if (contactSeq == 0)
                 fprintf(outFile, " %d %d %d", intvlStart, intvlEnd, lambda);
             else
@@ -96,9 +93,14 @@ Graph::Graph(const char* filePath, int contactSeq = 0)      //Reads the edges of
         outputEnd = FINAL_OPEND;
     else
         outputEnd = CONTACTSEQ_END;
+    
+    outputEnd += to_string(avgNumIntvls) + "-" + to_string(avgInvlDuration) + "-" + to_string(avgTrvlTime) + ".txt";
     len = outputEnd.length();
     std::string outputFinal(opFile);
     outputFinal.replace(opFile.length()-4, len, outputEnd);
+    
+    if ((maxVertex != numVerts-1) || (numEdgesWritten != numEdges))
+        cout << "Verts or edges don't match declred at top of file. MaxFound=" <<maxVertex << "Max declared: "<<numVerts << "MaxEdges found: " << numEdgesWritten << "MaxEdges declred: " << numEdges << endl;
 
     finalizeOutput(maxVertex+1, numEdgesWritten, opFile, outputFinal, contactSeq);
     cout << "NumEdges: " << numEdgesWritten << ". Num Vertices: " << maxVertex << ".\n";
@@ -190,7 +192,8 @@ void Graph::finalizeOutput(int numVertices, int numEdges, string opFile, string 
 void Graph::xuanToWuModel(const char* filePath, int contactSeq) // input file
 {
     int u, v, lambda, numIntvls, intvlStart, intvlEnd, numEdgesWritten = 0, numVertices;
-    string outputEnd = "_wu.txt";
+    string outputEnd = WU_END;
+    
     unsigned long len = outputEnd.length();
     std::string opFile(filePath);
     opFile.replace(opFile.length()-4, len, outputEnd);   //cout << opFile;

@@ -12,13 +12,29 @@
 
 #include <iostream>
 #include "Graph.hpp"
+//#include "roadNw.hpp"
 
 int main(int argc, const char * argv[]) {
+    Graph g;
     int contactSeq = 0;
-    if (argc == 3)
+    if (argc == 6)
         contactSeq = 1;
-    Graph g(argv[1], contactSeq);
-
+    if (argc <5)
+        g = Graph(argv[1]);
+    else
+    {
+        int avgNumIntvls = atoi(argv[2]), avgIntvlDuration=atoi(argv[3]), avgTrvlTime=atoi(argv[4]);
+        if (argc ==5)
+            g = Graph(argv[1], avgNumIntvls, avgIntvlDuration, avgTrvlTime);
+        else
+            g = Graph(argv[1], avgNumIntvls, avgIntvlDuration, avgTrvlTime,contactSeq);
+    }
+/*    rnParser roadNw;
+    roadNw.readLinks(argv[1]);
+    roadNw.readSpeeds(argv[2], argv[3], (int)roadNw.rdNetwork.size());
+    roadNw.formIntvls();
+    roadNw.printRnGraph(argv[1]);
+*/
     std::cout << "Hello, World!\n";
     return 0;
 }
