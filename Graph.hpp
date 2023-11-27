@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <set>
 #include <queue>
+#include <tuple>
 #include <iostream>
 using namespace std;
 #define MAX_RANGE 500
@@ -43,16 +44,16 @@ public:
 
 class compareTuple {
 public:
-    bool operator () (std::tuple<int, int, int, int> tup1, std::tuple<int, int, int, int> tup2)
+    bool operator () (tuple<int, int, int, int> tup1, tuple<int, int, int, int> tup2)
     {
-        if (std::get<2>(tup1) != std::get<2>(tup2))
-            return (std::get<2>(tup1) < std::get<2>(tup2));
-        else if (std::get<0>(tup1) != std::get<0>(tup2))
-            return (std::get<0>(tup1) < std::get<0>(tup2));
-        else if (std::get<1>(tup1) != std::get<1>(tup2))
-            return (std::get<1>(tup1) < std::get<1>(tup2));
+        if (get<2>(tup1) != get<2>(tup2))
+            return (get<2>(tup1) < get<2>(tup2));
+        else if (get<0>(tup1) != get<0>(tup2))
+            return (get<0>(tup1) < get<0>(tup2));
+        else if (get<1>(tup1) != get<1>(tup2))
+            return (get<1>(tup1) < get<1>(tup2));
         else
-            return (std::get<3>(tup1) < std::get<3>(tup2));
+            return (get<3>(tup1) < get<3>(tup2));
     }
 };
 
