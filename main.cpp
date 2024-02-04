@@ -17,6 +17,16 @@
 int main(int argc, const char * argv[]) {
     Graph g;
     int contactSeq = 0;
+    
+    const char* option = argv[2];
+    
+    if(!strcmp(option,"xTowu"))
+    {
+        g.xuanToWuModel(argv[1], contactSeq);
+        return 0;
+    }
+    
+    
     if (argc == 6)
         contactSeq = 1;
     if (argc <5)
