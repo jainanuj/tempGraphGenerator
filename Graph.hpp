@@ -18,7 +18,7 @@
 #include <tuple>
 #include <iostream>
 using namespace std;
-#define MAX_RANGE 500
+#define MAX_RANGE 10000
 #define STD_DEV 2
 #define AVG_NUM_INTVLS 2
 #define AVG_INTVL_DURATION 5
